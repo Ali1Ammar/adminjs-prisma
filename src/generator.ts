@@ -1,54 +1,77 @@
 #!/usr/bin/env node
 import pkg from '@prisma/generator-helper';
 const { generatorHandler } = pkg;
-import type { GeneratorOptions } from '@prisma/generator-helper';
+import type { GeneratorOptions, DMMF } from '@prisma/generator-helper';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const serializeField = (field: any) => ({
-    name: field.name,
-    kind: field.kind,
-    type: field.type,
-    isList: field.isList,
-    isRequired: field.isRequired,
-    isId: field.isId ?? false,
-    isUnique: field.isUnique ?? false,
-    isReadOnly: field.isReadOnly ?? false,
-    isUpdatedAt: field.isUpdatedAt ?? false,
-    hasDefaultValue: field.hasDefaultValue ?? false,
-});
+type PrismaField = {
+    name: string;
+    kind: DMMF.FieldKind;
+    type: string;
+    isList: boolean;
+    isRequired: boolean;
+    isId?: true;
+    isUnique?: true;
+    isReadOnly?: true;
+    isUpdatedAt?: true;
+    hasDefaultValue?: true;
+    relationName?: string;
+    relationFromFields?: readonly string[];
+    relationToFields?: readonly string[];
+};
 
-const serializeRelation = (field: any) => ({
-    ...serializeField(field),
-    relationName: field.relationName ?? null,
-    relationFromFields: field.relationFromFields ?? [],
-    relationToFields: field.relationToFields ?? [],
-});
+type PrismaModel = {
+    name: string;
+    fields: PrismaField[];
+};
+
+const serializeField = (field: DMMF.Field): PrismaField => {
+    const obj: any = {
+        name: field.name,
+        kind: field.kind,
+        type: field.type,
+        isList: field.isList,
+        isRequired: field.isRequired,
+    };
+
+    if (field.isId) obj.isId = true;
+    if (field.isUnique) obj.isUnique = true;
+    if (field.isReadOnly) obj.isReadOnly = true;
+    if (field.isUpdatedAt) obj.isUpdatedAt = true;
+    if (field.hasDefaultValue) obj.hasDefaultValue = true;
+
+    return obj;
+};
+
+const serializeRelation = (field: DMMF.Field): PrismaField => {
+    const obj = serializeField(field);
+
+    if (field.relationName) obj.relationName = field.relationName;
+    if (field.relationFromFields?.length) obj.relationFromFields = field.relationFromFields;
+    if (field.relationToFields?.length) obj.relationToFields = field.relationToFields;
+
+    return obj;
+};
 
 generatorHandler({
     onManifest() {
         return {
             prettyName: 'AdminJS Prisma Metadata Generator',
-            defaultOutput: '../generated/adminjs-prisma',
+            defaultOutput: '../generated/adminjs',
         };
     },
     async onGenerate(options: GeneratorOptions) {
-        const models: Record<string, any> = {};
+        const models: Record<string, PrismaModel> = {};
 
         // eslint-disable-next-line no-restricted-syntax
         for (const model of options.dmmf.datamodel.models) {
-            const scalars = model.fields.filter((f) => f.kind === 'scalar');
-            const relations = model.fields.filter((f) => f.kind === 'object');
-            const enums = model.fields.filter((f) => f.kind === 'enum');
-
             models[model.name] = {
                 name: model.name,
-                idFields: scalars.filter((f) => f.isId).map((f) => f.name),
-                scalars: scalars.map(serializeField),
-                relations: relations.map(serializeRelation),
-                enums: enums.map(serializeField),
-                allFields: model.fields.map(serializeField),
-                fields: model.fields.map(serializeField), // Keeping 'fields' for compatibility if needed
+                fields: model.fields.map((f) => {
+                    if (f.kind === 'object') return serializeRelation(f);
+                    return serializeField(f);
+                }),
             };
         }
 
@@ -57,8 +80,8 @@ generatorHandler({
         );
 
         const content = `export const prismaMetadata = ${JSON.stringify({ models, enums }, null, 2)} as const;\n`;
-
         const outputDir = options.generator.output?.value;
+
         if (!outputDir) throw new Error('No output directory defined for adminjs-prisma generator');
 
         mkdirSync(outputDir, { recursive: true });

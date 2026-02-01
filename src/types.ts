@@ -4,11 +4,11 @@ export interface PrismaField {
   type: string;
   isList: boolean;
   isRequired: boolean;
-  isId: boolean;
-  isUnique: boolean;
-  isReadOnly: boolean;
-  isUpdatedAt: boolean;
-  hasDefaultValue: boolean;
+  isId?: boolean;
+  isUnique?: boolean;
+  isReadOnly?: boolean;
+  isUpdatedAt?: boolean;
+  hasDefaultValue?: boolean;
   relationName?: string | null;
   relationFromFields?: readonly string[];
   relationToFields?: readonly string[];
@@ -16,9 +16,7 @@ export interface PrismaField {
 
 export interface PrismaModel {
   name: string;
-  idFields: readonly string[];
   fields: readonly PrismaField[];
-  [key: string]: any;
 }
 
 export interface PrismaMetadata {
