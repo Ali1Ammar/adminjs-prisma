@@ -2,19 +2,16 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
 import { BaseResource, Filter, BaseRecord, flat } from 'adminjs';
-import { PrismaClient } from '@prisma/client';
-import { DMMF } from '@prisma/client/runtime/library.js';
 
 import { Property } from './Property.js';
 import { lowerCase } from './utils/helpers.js';
-import { ModelManager, Enums } from './types.js';
+import { ModelManager, Enums, PrismaModel } from './types.js';
 import { convertFilter, convertParam } from './utils/converters.js';
-import { getEnums } from './utils/get-enums.js';
 
 export class Resource extends BaseResource {
-  protected client: PrismaClient;
+  protected client: any;
 
-  protected model: DMMF.Model;
+  protected model: PrismaModel;
 
   protected enums: Enums;
 
@@ -25,16 +22,16 @@ export class Resource extends BaseResource {
   protected idProperty: Property;
 
   constructor(args: {
-    model: DMMF.Model;
-    client: PrismaClient;
-    clientModule?: any;
+    model: PrismaModel;
+    client: any;
+    enums: Enums;
   }) {
     super(args);
 
-    const { model, client, clientModule } = args;
+    const { model, client, enums } = args;
     this.model = model;
     this.client = client;
-    this.enums = getEnums(clientModule);
+    this.enums = enums;
     this.manager = this.client[lowerCase(model.name)];
     this.propertiesObject = this.prepareProperties();
     this.idProperty = this.properties().find((p) => p.isId())!;
@@ -196,8 +193,8 @@ export class Resource extends BaseResource {
   }
 
   public static isAdapterFor(args: {
-    model: DMMF.Model;
-    client: PrismaClient;
+    model: PrismaModel;
+    client: any;
   }): boolean {
     const { model, client } = args;
 
