@@ -14,9 +14,15 @@ export interface PrismaField {
   relationToFields?: readonly string[];
 }
 
+export interface PrismaCompositePrimaryKey {
+  name: string | null;
+  fields: readonly string[];
+}
+
 export interface PrismaModel {
   name: string;
   fields: readonly PrismaField[];
+  primaryKey?: PrismaCompositePrimaryKey | null;
 }
 
 export interface PrismaMetadata {

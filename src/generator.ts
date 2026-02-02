@@ -21,9 +21,15 @@ type PrismaField = {
     relationToFields?: readonly string[];
 };
 
+type PrismaCompositePrimaryKey = {
+    name: string | null;
+    fields: readonly string[];
+};
+
 type PrismaModel = {
     name: string;
     fields: PrismaField[];
+    primaryKey?: PrismaCompositePrimaryKey | null;
 };
 
 const serializeField = (field: DMMF.Field): PrismaField => {
@@ -66,13 +72,23 @@ generatorHandler({
 
         // eslint-disable-next-line no-restricted-syntax
         for (const model of options.dmmf.datamodel.models) {
-            models[model.name] = {
+            const prismaModel: PrismaModel = {
                 name: model.name,
                 fields: model.fields.map((f) => {
                     if (f.kind === 'object') return serializeRelation(f);
                     return serializeField(f);
                 }),
             };
+
+            // Add composite primary key if present (@@id([...]))
+            if (model.primaryKey?.fields?.length) {
+                prismaModel.primaryKey = {
+                    name: model.primaryKey.name ?? null,
+                    fields: model.primaryKey.fields,
+                };
+            }
+
+            models[model.name] = prismaModel;
         }
 
         const enums = Object.fromEntries(
