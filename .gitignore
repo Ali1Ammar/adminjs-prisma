@@ -158,6 +158,5 @@ dist
 
 types
 build
-lib
 .adminjs
 /spec/prisma/migrations
