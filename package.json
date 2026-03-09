@@ -29,8 +29,7 @@
     "ts-node": "ts-node",
     "lint": "eslint './src/**/*.{ts,js}' './spec/**/*.{ts,js}' './example-app/**/*.{ts,js}' --ignore-pattern 'build' --ignore-pattern 'yarn.lock'",
     "check:all": "yarn lint && yarn test && yarn build",
-    "release": "semantic-release",
-    "prepare": "npm run build"
+    "release": "semantic-release"
   },
   "repository": {
     "type": "git",
