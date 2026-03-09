@@ -79,6 +79,10 @@ export class Property extends BaseProperty {
     return this.column.kind === 'enum';
   }
 
+  public isArray(): boolean {
+    return this.column.isList;
+  }
+
   public type(): PropertyType {
     let type: PropertyType = DATA_TYPES[this.column.type];
 

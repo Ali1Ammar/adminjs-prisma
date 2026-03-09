@@ -56,6 +56,10 @@ export const convertFilter = (modelFields: readonly PrismaField[], filterObject?
         modelFields,
         filter.value,
       );
+    } else if ((filter.property as Property).isArray() && (filter.property as Property).reference()) {
+      // Collection relations (One-to-Many reverse, Many-to-Many)
+      // Convert to Prisma's 'some' syntax: { lessons: { some: { id: 'xxx' } } }
+      where[name] = { some: { id: filter.value } };
     } else {
       where[name] = { contains: filter.value.toString() };
     }

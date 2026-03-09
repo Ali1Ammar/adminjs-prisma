@@ -318,10 +318,14 @@ export class Resource extends BaseResource {
     const { fields = [] } = this.model;
 
     const properties = fields.reduce((memo, field) => {
-      if (
-        field.isReadOnly
-        || (field.relationName && !field.relationFromFields?.length)
-      ) {
+      // Skip readonly fields
+      if (field.isReadOnly) {
+        return memo;
+      }
+
+      // Skip non-list relations without FK (the "virtual" side of One-to-One/Many-to-One)
+      // But KEEP list relations (One-to-Many reverse, Many-to-Many) for navigation
+      if (field.relationName && !field.relationFromFields?.length && !field.isList) {
         return memo;
       }
 
